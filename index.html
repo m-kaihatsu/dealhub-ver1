@@ -1,0 +1,1014 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DEEL HUB - 商談マッチングプラットフォーム プロトタイプ</title>
+<style>
+  :root{
+    --ink:#0F1E3D;
+    --ink-soft:#2B3B5B;
+    --blue:#3E7CF0;
+    --blue-soft:#8FB4F5;
+    --brick:#A34A34;
+    --bg:#FFFFFF;
+    --surface:#FFFFFF;
+    --line:#DFE3E8;
+    --text:#1E2530;
+    --muted:#6B7480;
+    --radius:6px;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:'Meiryo UI', Meiryo, sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{display:flex;min-height:100vh;}
+
+  /* Sidebar */
+  .sidebar{width:250px;flex-shrink:0;background:#FFFFFF;color:var(--text);display:flex;flex-direction:column;padding:22px 0;border-right:1px solid var(--line);}
+  .brand{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:0 20px 18px;border-bottom:1px solid var(--line);margin-bottom:16px;}
+  .brand .mark{font-family:'Meiryo UI', Meiryo, sans-serif;font-weight:700;font-size:20px;color:var(--ink);}
+  .brand .name{font-family:'Meiryo UI', Meiryo, sans-serif;font-weight:700;font-size:20px;color:var(--blue);}
+  .brand-tag{font-size:11px;color:var(--muted);line-height:1.5;padding:0 20px 16px;border-bottom:1px solid var(--line);margin-bottom:16px;}
+  .collapse-ic{color:var(--muted);font-size:14px;cursor:default;}
+
+  .mode-switch{margin:0 16px 20px;background:#F1F3F7;border-radius:10px;padding:4px;display:flex;gap:2px;}
+  .mode-switch button{
+    all:unset;flex:1;text-align:center;cursor:pointer;font-size:12px;padding:9px 4px;border-radius:8px;color:var(--muted);
+  }
+  .mode-switch button.active{background:var(--blue);color:#fff;font-weight:600;}
+
+  nav{display:flex;flex-direction:column;gap:3px;padding:0 14px;}
+  nav button{
+    all:unset;cursor:pointer;padding:11px 14px;border-radius:10px;font-size:14px;color:var(--ink-soft);
+    display:flex;align-items:center;gap:11px;transition:background .15s ease, color .15s ease;
+  }
+  nav button svg{flex-shrink:0;opacity:.8;}
+  nav button:hover{background:#F1F3F7;}
+  nav button.active{background:var(--blue);color:#fff;box-shadow:0 4px 10px rgba(62,124,240,.35);}
+  nav button.active svg{opacity:1;}
+  .sidebar-foot{margin-top:auto;padding:16px 20px 4px;font-size:11px;color:var(--muted);}
+  .logout-btn{margin:14px 16px 0;border:1px solid var(--line);border-radius:10px;padding:10px;text-align:center;font-size:13px;color:var(--ink-soft);cursor:default;}
+
+  /* Top header */
+  .app-header{display:flex;align-items:center;justify-content:space-between;padding:16px 40px;border-bottom:1px solid var(--line);}
+  .search-box{display:flex;align-items:center;gap:8px;background:#F1F3F7;border-radius:10px;padding:9px 14px;width:280px;color:var(--muted);}
+  .search-box input{all:unset;flex:1;font-size:13px;color:var(--text);}
+  .header-icons{display:flex;align-items:center;gap:14px;}
+  .icon-btn{width:34px;height:34px;border-radius:50%;background:#F1F3F7;display:flex;align-items:center;justify-content:center;color:var(--ink-soft);flex-shrink:0;}
+  .avatar-chip{width:34px;height:34px;border-radius:50%;background:var(--ink);color:#fff;font-size:12.5px;font-weight:600;display:flex;align-items:center;justify-content:center;}
+
+  /* Main */
+  .main{flex:1;min-width:0;display:flex;flex-direction:column;}
+  .main-body{padding:28px 40px 60px;overflow-y:auto;}
+  .topbar{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:20px;}
+  .topbar h1{font-size:21px;font-weight:700;margin:0 0 4px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .topbar p{margin:0;color:var(--muted);font-size:13.5px;}
+  .role-pill{font-size:11.5px;font-weight:600;padding:5px 12px;border-radius:20px;}
+  .role-pill.buyer{background:#E8EEFC;color:var(--blue);}
+  .role-pill.agency{background:#EAF3EC;color:#3E6B4A;}
+
+  .kpi-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:24px;}
+  .kpi{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px 20px;min-width:150px;box-shadow:0 1px 2px rgba(16,24,40,0.04);}
+  .kpi .num{font-family:'Meiryo UI', Meiryo, sans-serif;font-size:24px;font-weight:700;color:var(--ink);}
+  .kpi .lbl{font-size:11.5px;color:var(--muted);margin-top:2px;}
+
+  /* Ring KPI card (dashboard) */
+  .ring-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 20px;box-shadow:0 1px 2px rgba(16,24,40,0.04);display:flex;align-items:center;justify-content:space-between;gap:12px;flex:1;min-width:190px;}
+  .ring-card .lbl{font-size:12.5px;color:var(--muted);margin-bottom:6px;}
+  .ring-card .num{font-size:24px;font-weight:700;color:var(--ink);}
+  .ring-card .sub{font-size:11px;color:var(--muted);margin-top:4px;}
+  .ring{position:relative;width:56px;height:56px;flex-shrink:0;}
+  .ring svg{transform:rotate(-90deg);}
+  .ring .pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--ink);}
+
+  .view{display:none;}
+  .view.active{display:block;}
+
+  /* Deal / posting cards */
+  .deal-card{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--blue);border-radius:var(--radius);padding:18px 20px;margin-bottom:14px;}
+  .deal-card.approved{border-left-color:#4C8B5F;opacity:.72;}
+  .deal-card.rejected{border-left-color:var(--brick);opacity:.72;}
+  .deal-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
+  .deal-head h3{margin:0 0 4px;font-size:16px;font-weight:600;}
+  .deal-meta{font-size:12.5px;color:var(--muted);}
+  .deal-fee{font-family:'Meiryo UI', Meiryo, sans-serif;font-size:20px;font-weight:600;color:var(--ink);text-align:right;}
+  .deal-fee small{display:block;font-family:'Meiryo UI', Meiryo, sans-serif;font-size:11px;color:var(--muted);font-weight:400;}
+  .checklist{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 14px;}
+  .chk{font-size:12.5px;padding:5px 10px;border-radius:4px;background:#EEF3EC;color:#3E6B4A;display:flex;align-items:center;gap:5px;}
+  .chk.fail{background:#F5EBE8;color:var(--brick);}
+  .deal-actions{display:flex;gap:10px;align-items:center;}
+  .btn{all:unset;cursor:pointer;font-size:13.5px;font-weight:500;padding:8px 18px;border-radius:var(--radius);transition:opacity .15s ease;}
+  .btn:hover{opacity:.85;}
+  .btn.primary{background:var(--ink);color:#fff;}
+  .btn.outline{background:transparent;color:var(--brick);border:1px solid #E0C4BC;}
+  .btn.blue{background:var(--blue);color:#fff;}
+  .btn.small{padding:6px 12px;font-size:12.5px;}
+  .status-tag{font-size:12px;font-weight:500;padding:4px 10px;border-radius:4px;}
+  .status-tag.done-a{background:#E7F1E9;color:#3E6B4A;}
+  .status-tag.done-r{background:#F5EBE8;color:var(--brick);}
+  .status-tag.pending{background:#E8EEFC;color:var(--blue);}
+
+  .payout-bar{background:var(--ink);color:#fff;border-radius:14px;padding:20px 26px;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+  .payout-bar .label{font-size:13px;color:#B9C1D4;}
+  .payout-bar .figures{display:flex;gap:34px;flex-wrap:wrap;}
+  .payout-bar .figures div{text-align:right;}
+  .payout-bar .figures .n{font-family:'Meiryo UI', Meiryo, sans-serif;font-size:21px;font-weight:600;}
+
+  /* Deal workspace (list + detail + activity) */
+  .deal-workspace{display:grid;grid-template-columns:250px 1fr 300px;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 1px 3px rgba(16,24,40,.06);min-height:640px;}
+  .deal-listpane{border-right:1px solid var(--line);overflow-y:auto;}
+  .deal-listitem{padding:15px 18px;border-bottom:1px solid var(--line);cursor:pointer;transition:background .12s ease;}
+  .deal-listitem:hover{background:#F7F9FC;}
+  .deal-listitem.active{background:#EEF3FD;box-shadow:inset 3px 0 0 var(--blue);}
+  .deal-listitem .nm{font-size:13.5px;font-weight:600;margin-bottom:5px;}
+  .deal-listitem .meta{font-size:11.5px;color:var(--muted);display:flex;justify-content:space-between;align-items:center;}
+  .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;}
+  .dot.pending{background:var(--blue);}
+  .dot.approved{background:#4C8B5F;}
+  .dot.rejected{background:var(--brick);}
+
+  .deal-detailpane{padding:28px 32px;overflow-y:auto;}
+  .detail-head{display:flex;align-items:center;gap:14px;margin-bottom:22px;}
+  .detail-back{cursor:default;color:var(--muted);font-size:18px;}
+  .detail-head h2{margin:0;font-size:19px;font-weight:600;flex:1;}
+  .status-select{font-size:12.5px;font-weight:500;padding:7px 16px;border-radius:20px;border:1px solid var(--line);background:#F7F9FC;color:var(--text);}
+  .detail-actions{display:flex;gap:10px;margin-bottom:26px;}
+
+  .amount-row{display:flex;gap:16px;margin-bottom:26px;flex-wrap:wrap;}
+  .amount-card{background:#F7F9FC;border:1px solid var(--line);border-radius:12px;padding:18px 22px;flex:1;min-width:170px;}
+  .amount-card .big{font-size:28px;font-weight:700;color:var(--ink);line-height:1;}
+  .amount-card .lbl{font-size:11.5px;color:var(--muted);margin-top:8px;}
+  .schedule-card{background:#F7F9FC;border:1px solid var(--line);border-radius:12px;padding:18px 22px;flex:1.6;min-width:260px;}
+  .schedule-card .lbl{font-size:11.5px;color:var(--muted);margin-bottom:10px;}
+  .schedule-pills{display:flex;gap:8px;flex-wrap:wrap;}
+  .schedule-pills span{background:#fff;border:1px solid var(--line);border-radius:8px;padding:7px 14px;font-size:13px;font-weight:500;}
+
+  .info-grid{display:grid;grid-template-columns:1fr 1.3fr;gap:30px;}
+  .info-block h4{margin:0 0 4px;font-size:12.5px;color:var(--muted);font-weight:600;}
+  .info-item{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
+  .cond-item{padding:14px 0;border-bottom:1px solid var(--line);}
+  .cond-item .q{font-size:13.5px;margin-bottom:9px;line-height:1.5;}
+  .cond-item .req{font-size:10px;color:var(--blue);border:1px solid var(--blue-soft);border-radius:10px;padding:1px 8px;margin-left:6px;white-space:nowrap;}
+  .ans-chip{display:inline-block;font-size:12px;padding:5px 15px;border-radius:16px;border:1px solid var(--line);background:#fff;margin-right:6px;color:var(--muted);}
+  .ans-chip.selected{background:var(--ink);color:#fff;border-color:var(--ink);}
+
+  .deal-activitypane{border-left:1px solid var(--line);padding:22px 20px;overflow-y:auto;background:#FAFBFC;}
+  .deal-activitypane h4{margin:0 0 18px;font-size:12.5px;color:var(--muted);font-weight:600;}
+  .act-item{display:flex;gap:10px;margin-bottom:18px;}
+  .avatar{width:26px;height:26px;border-radius:50%;background:var(--blue);color:#fff;font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+  .act-body{font-size:12.5px;flex:1;}
+  .act-body .who{font-weight:600;}
+  .act-body .time{color:var(--muted);font-size:11px;margin-top:2px;}
+  .act-msg{background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 12px;font-size:12.5px;margin-top:6px;line-height:1.5;}
+  .payout-bar .figures .l{font-size:11px;color:#98A2BC;margin-top:2px;}
+
+  /* Agencies */
+  .agency-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
+  .agency-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:18px;}
+  .agency-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+  .agency-top h4{margin:0;font-size:15px;font-weight:600;}
+  .badge{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;letter-spacing:.02em;}
+  .badge.bronze{background:#EFE3D6;color:#8A5A2B;}
+  .badge.silver{background:#E7E9ED;color:#5A6270;}
+  .badge.gold{background:#F5E6C6;color:#8A6412;}
+  .badge.platinum{background:#E4E9F5;color:#3A4A8A;}
+  .metric-row{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted);padding:5px 0;border-top:1px solid var(--line);}
+  .metric-row b{color:var(--text);font-weight:600;}
+  .agency-tags{margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;}
+  .tag{font-size:11px;background:#EFF1F4;color:var(--ink-soft);padding:3px 9px;border-radius:4px;}
+
+  /* Conditions builder */
+  .builder-grid{display:grid;grid-template-columns:1.1fr 0.9fr;gap:24px;align-items:start;}
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:22px;box-shadow:0 1px 2px rgba(16,24,40,0.04);}
+  .panel h3{margin:0 0 4px;font-size:15px;}
+  .panel .sub{font-size:12.5px;color:var(--muted);margin-bottom:16px;}
+  .field-row{display:flex;gap:10px;align-items:center;padding:9px 0;border-bottom:1px dashed var(--line);}
+  .field-row input[type=text]{flex:1;border:1px solid var(--line);border-radius:4px;padding:7px 10px;font-size:13px;font-family:inherit;}
+  .field-row .del{cursor:pointer;color:var(--muted);font-size:16px;padding:2px 6px;}
+  .add-field{margin-top:12px;background:none;border:1px dashed var(--blue);color:var(--blue);border-radius:4px;padding:8px 14px;font-size:13px;cursor:pointer;}
+  .tmpl-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
+  .tmpl-item:last-child{border-bottom:none;}
+  .tmpl-item .use{font-size:12px;color:var(--blue);cursor:pointer;font-weight:500;}
+
+  /* Chat */
+  .chat-wrap{display:grid;grid-template-columns:260px 1fr;gap:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;height:540px;}
+  .chat-list{border-right:1px solid var(--line);overflow-y:auto;}
+  .chat-item{padding:14px 18px;border-bottom:1px solid var(--line);cursor:pointer;}
+  .chat-item.active{background:#EEF3FD;}
+  .chat-item .nm{font-size:13.5px;font-weight:600;}
+  .chat-item .pv{font-size:12px;color:var(--muted);margin-top:3px;}
+  .chat-main{display:flex;flex-direction:column;}
+  .chat-warn{background:#FBF3E2;color:#8A6412;font-size:12px;padding:9px 18px;border-bottom:1px solid var(--line);}
+  .chat-body{flex:1;padding:20px;overflow-y:auto;display:flex;flex-direction:column;gap:12px;}
+  .bubble{max-width:64%;padding:10px 14px;border-radius:10px;font-size:13.5px;line-height:1.5;}
+  .bubble.them{background:#EEF0F3;align-self:flex-start;}
+  .bubble.me{background:var(--ink);color:#fff;align-self:flex-end;}
+  .chat-input{display:flex;gap:10px;padding:14px 18px;border-top:1px solid var(--line);}
+  .chat-input input{flex:1;border:1px solid var(--line);border-radius:6px;padding:9px 12px;font-family:inherit;font-size:13.5px;}
+
+  /* Non-disclosed */
+  .reveal-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:24px;max-width:520px;margin-bottom:16px;}
+  .reveal-stage{font-size:11.5px;color:var(--blue);font-weight:600;margin-bottom:8px;}
+  .reveal-name{font-family:'Meiryo UI', Meiryo, sans-serif;font-size:22px;font-weight:600;margin-bottom:6px;}
+  .reveal-row{display:flex;justify-content:space-between;font-size:13px;padding:8px 0;border-top:1px solid var(--line);color:var(--muted);}
+  .reveal-row b{color:var(--text);}
+  .blur{filter:blur(5px);user-select:none;}
+
+  /* Buyer dashboard */
+  .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .quick-link{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
+  .quick-link:last-child{border-bottom:none;}
+
+  /* Agency board (open postings) */
+  .post-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px 22px;margin-bottom:14px;box-shadow:0 1px 2px rgba(16,24,40,0.04);}
+  .post-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
+  .cat-badge{font-size:11.5px;font-weight:600;padding:4px 12px;border-radius:20px;}
+  .cat-badge.cat-blue{background:#E6EFFD;color:#3E7CF0;}
+  .cat-badge.cat-orange{background:#FCEEE1;color:#C97A2B;}
+  .cat-badge.cat-purple{background:#F1E9FB;color:#7B4FC9;}
+  .cat-badge.cat-green{background:#E4F4EA;color:#2F9E5B;}
+  .cat-badge.cat-grey{background:#EEF0F3;color:#6B7480;}
+  .bookmark{color:#C7CCD4;cursor:pointer;flex-shrink:0;}
+  .bookmark:hover{color:var(--blue);}
+  .post-title{margin:0 0 6px;font-size:16.5px;font-weight:600;color:var(--text);}
+  .post-sub{font-size:12.5px;color:var(--muted);margin-bottom:16px;}
+  .post-stats-row{display:flex;align-items:center;gap:36px;padding-top:14px;border-top:1px solid var(--line);}
+  .post-stat{min-width:78px;}
+  .post-stat .l{font-size:11.5px;color:var(--muted);margin-bottom:4px;}
+  .post-stat .v{font-size:15px;font-weight:600;color:var(--text);}
+  .post-stat .v span{font-size:11.5px;font-weight:400;color:var(--muted);}
+  .post-stats-row .btn{margin-left:auto;flex-shrink:0;}
+
+  /* Grade profile */
+  .profile-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:24px;max-width:640px;}
+  .profile-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;}
+  .profile-top h2{margin:0;font-size:18px;}
+  .progress-wrap{margin:14px 0 4px;}
+  .progress-track{background:#EDEFF2;border-radius:20px;height:10px;overflow:hidden;}
+  .progress-fill{background:var(--blue);height:100%;border-radius:20px;}
+  .progress-label{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:6px;}
+  .req-table{width:100%;border-collapse:collapse;margin-top:18px;font-size:13px;}
+  .req-table th,.req-table td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);}
+  .req-table th{color:var(--muted);font-weight:500;font-size:12px;}
+
+  /* Form */
+  .form-row{margin-bottom:14px;}
+  .form-row label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:5px;}
+  .form-row input,.form-row select,.form-row textarea{width:100%;border:1px solid var(--line);border-radius:5px;padding:9px 11px;font-family:inherit;font-size:13.5px;}
+
+  /* Invoice */
+  .invoice-grid{display:grid;grid-template-columns:0.9fr 1.1fr;gap:24px;align-items:start;}
+  .invoice-item{padding:13px 0;border-bottom:1px solid var(--line);cursor:pointer;}
+  .invoice-item:last-child{border-bottom:none;}
+  .invoice-item.active{background:#F5F8FF;margin:0 -8px;padding:13px 8px;border-radius:8px;}
+  .invoice-item-top{display:flex;justify-content:space-between;font-size:13.5px;font-weight:600;margin-bottom:5px;}
+  .invoice-item-sub{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);}
+  .invoice-status{font-size:11px;font-weight:600;padding:3px 10px;border-radius:12px;}
+  .invoice-status.paid{background:#E7F1E9;color:#3E6B4A;}
+  .invoice-status.due{background:#FBF3E2;color:#8A6412;}
+  .invoice-line{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--line);font-size:13.5px;}
+  .invoice-line .c{color:var(--muted);font-size:12px;margin-top:2px;}
+  .invoice-total-row{display:flex;justify-content:space-between;align-items:center;padding-top:16px;margin-top:6px;border-top:2px solid var(--ink);font-size:15px;font-weight:700;}
+  .form-row textarea{resize:vertical;min-height:70px;}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <div><span class="mark">DEEL</span> <span class="name">HUB</span></div>
+      <span class="collapse-ic">«</span>
+    </div>
+    <div class="brand-tag">営業機会を、最適なパートナーへ。</div>
+
+    <div class="mode-switch">
+      <button id="modeBuyerBtn" class="active" onclick="setMode('buyer')">発注企業として利用</button>
+      <button id="modeAgencyBtn" onclick="setMode('agency')">代理店として利用</button>
+    </div>
+
+    <nav id="navBuyer">
+      <button class="active" data-view="buyerHome"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11.5 12 4l9 7.5"/><path d="M5 10v10h14V10"/></svg>ダッシュボード</button>
+      <button data-view="deals"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3 7-7"/><path d="M20 12v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h9"/></svg>商談承認</button>
+      <button data-view="conditions"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h10M4 18h6"/></svg>案件を掲載</button>
+      <button data-view="findAgencies"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>代理店を探す</button>
+      <button data-view="privateManage"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>非公開案件を作成</button>
+      <button data-view="buyerInvoice"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2Z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>請求確認</button>
+      <button data-view="chat"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.4 8.4 0 0 1-8.9 8.4A9 9 0 0 1 4 18l-1 3 3-1a8.4 8.4 0 0 1 4-11.4 8.4 8.4 0 0 1 11 2.9Z"/></svg>チャット</button>
+    </nav>
+
+    <nav id="navAgency" style="display:none;">
+      <button class="active" data-view="openDeals"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16"/></svg>案件一覧</button>
+      <button data-view="myGrade"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l2.9 6.6 7.1.6-5.4 4.7L18.2 21 12 17.3 5.8 21l1.6-7.1L2 9.2l7.1-.6z"/></svg>マイグレード実績</button>
+      <button data-view="submitDeal"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>商談を提出</button>
+      <button data-view="privateView"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>非公開案件</button>
+      <button data-view="agencyInvoice"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2Z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>支払明細</button>
+      <button data-view="chat"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.4 8.4 0 0 1-8.9 8.4A9 9 0 0 1 4 18l-1 3 3-1a8.4 8.4 0 0 1 4-11.4 8.4 8.4 0 0 1 11 2.9Z"/></svg>チャット</button>
+    </nav>
+
+    <div class="sidebar-foot">プロトタイプ v1.0（デモ版）</div>
+    <div class="logout-btn">ログアウト</div>
+  </aside>
+
+  <main class="main">
+    <div class="app-header">
+      <div class="search-box">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+        <input type="text" placeholder="案件・代理店を検索...">
+      </div>
+      <div class="header-icons">
+        <span class="icon-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></svg></span>
+        <span class="icon-btn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.6 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.6-1 1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/></svg></span>
+        <div class="avatar-chip">SP</div>
+      </div>
+    </div>
+    <div class="main-body">
+
+    <!-- ============ 発注企業側 ============ -->
+
+    <section class="view active" id="buyerHome">
+      <div class="topbar">
+        <div>
+          <h1>ダッシュボード <span class="role-pill buyer">発注企業</span></h1>
+          <p>A社（AI研修サービス） 様　ようこそ</p>
+        </div>
+      </div>
+      <div class="kpi-row">
+        <div class="ring-card">
+          <div><div class="num">86</div><div class="lbl">累計商談数</div><div class="sub">先月比 +12件</div></div>
+          <div class="ring">
+            <svg width="56" height="56"><circle cx="28" cy="28" r="24" fill="none" stroke="#EDEFF2" stroke-width="6"/><circle cx="28" cy="28" r="24" fill="none" stroke="#3E7CF0" stroke-width="6" stroke-dasharray="150.8" stroke-dashoffset="45" stroke-linecap="round"/></svg>
+            <div class="pct">70%</div>
+          </div>
+        </div>
+        <div class="ring-card">
+          <div><div class="num">78%</div><div class="lbl">承認率</div><div class="sub">目標80%</div></div>
+          <div class="ring">
+            <svg width="56" height="56"><circle cx="28" cy="28" r="24" fill="none" stroke="#EDEFF2" stroke-width="6"/><circle cx="28" cy="28" r="24" fill="none" stroke="#3E7CF0" stroke-width="6" stroke-dasharray="150.8" stroke-dashoffset="33" stroke-linecap="round"/></svg>
+            <div class="pct">78%</div>
+          </div>
+        </div>
+        <div class="ring-card">
+          <div><div class="num">¥1,240,000</div><div class="lbl">今月の支払予定額</div><div class="sub">代理店4社へ</div></div>
+          <div class="ring">
+            <svg width="56" height="56"><circle cx="28" cy="28" r="24" fill="none" stroke="#EDEFF2" stroke-width="6"/><circle cx="28" cy="28" r="24" fill="none" stroke="#C98A2C" stroke-width="6" stroke-dasharray="150.8" stroke-dashoffset="60" stroke-linecap="round"/></svg>
+            <div class="pct">60%</div>
+          </div>
+        </div>
+        <div class="ring-card">
+          <div><div class="num">4</div><div class="lbl">稼働中の代理店</div><div class="sub">ゴールド以上 2社</div></div>
+          <div class="ring">
+            <svg width="56" height="56"><circle cx="28" cy="28" r="24" fill="none" stroke="#EDEFF2" stroke-width="6"/><circle cx="28" cy="28" r="24" fill="none" stroke="#4C8B5F" stroke-width="6" stroke-dasharray="150.8" stroke-dashoffset="75" stroke-linecap="round"/></svg>
+            <div class="pct">50%</div>
+          </div>
+        </div>
+      </div>
+      <div class="dash-grid">
+        <div class="panel">
+          <h3>承認待ちの商談</h3>
+          <div class="sub">2件の商談が承認待ちです</div>
+          <div class="quick-link"><span>第一製造株式会社</span><span class="status-tag pending">承認待ち</span></div>
+          <div class="quick-link"><span>サンプル商事株式会社</span><span class="status-tag pending">承認待ち</span></div>
+          <div style="margin-top:14px;"><button class="btn blue small" onclick="jumpTo('deals')">商談承認へ移動</button></div>
+        </div>
+        <div class="panel">
+          <h3>クイックリンク</h3>
+          <div class="quick-link"><span>新しい案件を掲載する</span><span class="status-tag pending" style="cursor:pointer;" onclick="jumpTo('conditions')">＋ 掲載</span></div>
+          <div class="quick-link"><span>実績のある代理店を探す</span><span class="status-tag pending" style="cursor:pointer;" onclick="jumpTo('findAgencies')">検索</span></div>
+          <div class="quick-link"><span>非公開案件を作成する</span><span class="status-tag pending" style="cursor:pointer;" onclick="jumpTo('privateManage')">作成</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="deals">
+      <div class="topbar">
+        <div>
+          <h1>商談承認 <span class="role-pill buyer">発注企業</span> <span class="role-pill" style="background:#F1F3F7;color:var(--muted);">マージン率 10%</span></h1>
+          <p>条件チェックリストに基づいて承認・却下を行うと、支払額が自動計算されます</p>
+        </div>
+      </div>
+      <div class="payout-bar">
+        <div class="label">今月の確定金額</div>
+        <div class="figures">
+          <div><div class="n" id="sumReceive">¥0</div><div class="l">受取合計</div></div>
+          <div><div class="n" id="sumPay">¥0</div><div class="l">代理店支払合計</div></div>
+          <div><div class="n" id="sumMargin">¥0</div><div class="l">マージン(10%)</div></div>
+        </div>
+      </div>
+      <div class="deal-workspace">
+        <div class="deal-listpane" id="dealListPane"></div>
+        <div class="deal-detailpane" id="dealDetailPane"></div>
+        <div class="deal-activitypane">
+          <h4>アクティビティ</h4>
+          <div id="activityFeed"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="conditions">
+      <div class="topbar">
+        <div>
+          <h1>案件を掲載 <span class="role-pill buyer">発注企業</span></h1>
+          <p>承認条件をチェックリスト化し、過去の受注実績をテンプレートとして保存・再利用できます</p>
+        </div>
+      </div>
+      <div class="builder-grid">
+        <div class="panel">
+          <h3>新規条件セット</h3>
+          <div class="sub">対象案件：A社（AI研修サービス） - AI研修提案</div>
+          <div id="fieldList"></div>
+          <button class="add-field" id="addField">＋ 条件を追加</button>
+          <div style="margin-top:18px;display:flex;gap:10px;">
+            <button class="btn primary" id="saveTmpl">テンプレートとして保存</button>
+            <button class="btn blue" onclick="alert('案件をオープン案件として掲載しました')">この条件で掲載する</button>
+          </div>
+        </div>
+        <div class="panel">
+          <h3>保存済みテンプレート</h3>
+          <div class="sub">過去の受注実績から作成された条件セット</div>
+          <div id="tmplList"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="findAgencies">
+      <div class="topbar">
+        <div>
+          <h1>代理店を探す <span class="role-pill buyer">発注企業</span></h1>
+          <p>過去の実績プロファイルから、ターゲット層に強い代理店を検索できます</p>
+        </div>
+      </div>
+      <div class="agency-grid" id="agencyGrid"></div>
+    </section>
+
+    <section class="view" id="privateManage">
+      <div class="topbar">
+        <div>
+          <h1>非公開案件を作成 <span class="role-pill buyer">発注企業</span></h1>
+          <p>社名を伏せた状態で募集し、グレードに応じて段階的に情報を開示します</p>
+        </div>
+      </div>
+      <div class="reveal-card">
+        <div class="reveal-stage">現在の公開段階</div>
+        <div class="reveal-name">① パブリック（全代理店にノンネームで公開中）</div>
+        <div class="reveal-row"><span>業種</span><b>製造業</b></div>
+        <div class="reveal-row"><span>想定単価</span><b>1件 45,000円</b></div>
+        <div class="reveal-row"><span>企業名の開示先</span><b>未選定</b></div>
+        <div style="margin-top:18px;display:flex;gap:10px;">
+          <button class="btn primary small" onclick="alert('②セミクローズド（ゴールド以上）に開示範囲を拡大しました')">②セミクローズドに進める</button>
+          <button class="btn blue small" onclick="alert('候補代理店の選定画面（1社限定 / 複数社同時開示）は今後の検討事項です')">③フルオープン先を選定</button>
+        </div>
+      </div>
+      <div class="panel" style="max-width:520px;">
+        <h3>この案件を見られる代理店</h3>
+        <div class="sub">現在の段階：①パブリック</div>
+        <div class="quick-link"><span>登録代理店 全24社</span><span class="tag">ノンネームのみ閲覧可</span></div>
+      </div>
+    </section>
+
+    <section class="view" id="buyerInvoice">
+      <div class="topbar">
+        <div>
+          <h1>請求確認 <span class="role-pill buyer">発注企業</span></h1>
+          <p>月次の請求内容と、承認済み商談ごとの内訳を確認できます</p>
+        </div>
+      </div>
+      <div class="invoice-grid">
+        <div class="panel">
+          <h3>請求一覧</h3>
+          <div class="sub">対象月ごとの請求ステータス</div>
+          <div id="buyerInvoiceList"></div>
+        </div>
+        <div class="panel">
+          <h3 id="invoiceDetailTitle">2026年9月分の内訳</h3>
+          <div class="sub">承認済み商談ベースで自動計算されています</div>
+          <div id="buyerInvoiceDetail"></div>
+          <div class="invoice-total-row">
+            <span>請求合計</span>
+            <b id="buyerInvoiceTotal">¥0</b>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 代理店側 ============ -->
+
+    <section class="view" id="openDeals">
+      <div class="topbar">
+        <div>
+          <h1>案件一覧 <span class="role-pill agency">代理店</span></h1>
+          <p>あなたのグレードで応募できる案件です</p>
+        </div>
+      </div>
+      <div id="postList"></div>
+    </section>
+
+
+    <section class="view" id="myGrade">
+      <div class="topbar">
+        <div>
+          <h1>マイグレード実績 <span class="role-pill agency">代理店</span></h1>
+          <p>稼働量・成果・品質の3軸でグレードが判定されます</p>
+        </div>
+      </div>
+      <div class="profile-card">
+        <div class="profile-top">
+          <h2>代理店X</h2>
+          <span class="badge gold">ゴールド</span>
+        </div>
+        <div class="metric-row"><span>稼働量</span><b>累計312件 / 継続8ヶ月</b></div>
+        <div class="metric-row"><span>成果</span><b>承認率 91% ・ 成約率 34%</b></div>
+        <div class="metric-row"><span>品質</span><b>クレーム率 0.3%</b></div>
+
+        <div class="progress-wrap">
+          <div class="progress-track"><div class="progress-fill" style="width:72%;"></div></div>
+          <div class="progress-label"><span>プラチナまで</span><span>継続稼働 あと4ヶ月 / 承認率 あと3pt</span></div>
+        </div>
+
+        <table class="req-table">
+          <tr><th>グレード</th><th>条件</th><th>特典</th></tr>
+          <tr><td>シルバー</td><td>累計アポ数・承認率が一定水準以上</td><td>案件の早期案内</td></tr>
+          <tr><td>ゴールド（現在）</td><td>継続稼働・承認率が一定水準以上</td><td>固定案件コンペ参加可</td></tr>
+          <tr><td>プラチナ</td><td>ゴールドでの実績継続</td><td>指名案件・優先アサイン</td></tr>
+        </table>
+      </div>
+    </section>
+
+    <section class="view" id="submitDeal">
+      <div class="topbar">
+        <div>
+          <h1>商談を提出 <span class="role-pill agency">代理店</span></h1>
+          <p>獲得した商談情報を提出すると、発注企業の承認フローに進みます</p>
+        </div>
+      </div>
+      <div class="panel" style="max-width:560px;">
+        <h3>商談情報の入力</h3>
+        <div class="sub">案件：A社（AI研修サービス） - AI研修提案</div>
+        <div class="form-row">
+          <label>企業名</label>
+          <input type="text" id="subCompany" placeholder="例：第一製造株式会社">
+        </div>
+        <div class="form-row">
+          <label>担当者名・役職</label>
+          <input type="text" placeholder="例：高山 佳央 様（経理部長）">
+        </div>
+        <div class="form-row">
+          <label>商談日時</label>
+          <input type="text" placeholder="例：2026/09/20 14:00〜">
+        </div>
+        <div class="form-row">
+          <label>ヒアリングメモ</label>
+          <textarea placeholder="AI活用状況、課題感など"></textarea>
+        </div>
+        <button class="btn blue" id="submitDealBtn">この内容で提出する</button>
+        <div id="submitList" style="margin-top:18px;"></div>
+      </div>
+    </section>
+
+    <section class="view" id="privateView">
+      <div class="topbar">
+        <div>
+          <h1>非公開案件 <span class="role-pill agency">代理店</span></h1>
+          <p>グレードが上がるほど、詳細な情報が見られるようになります</p>
+        </div>
+      </div>
+      <div class="reveal-card">
+        <div class="reveal-stage" id="revealStage">① パブリック</div>
+        <div class="reveal-name" id="revealName">非公開企業（製造業）</div>
+        <div class="reveal-row"><span>業種</span><b>製造業</b></div>
+        <div class="reveal-row"><span>想定単価（手数料控除後）</span><b>1件 40,500円</b></div>
+        <div class="reveal-row"><span>企業名</span><b class="blur" id="revealCompany">第一製造株式会社</b></div>
+        <div class="reveal-row"><span>担当者名</span><b class="blur" id="revealContact">非公開</b></div>
+        <div style="margin-top:18px;">
+          <button class="btn primary small" id="revealNext">グレードを上げて次の段階を見る（デモ）</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="agencyInvoice">
+      <div class="topbar">
+        <div>
+          <h1>支払明細 <span class="role-pill agency">代理店</span></h1>
+          <p>月次の支払予定・支払済み明細を確認できます</p>
+        </div>
+      </div>
+      <div class="invoice-grid">
+        <div class="panel">
+          <h3>支払明細一覧</h3>
+          <div class="sub">対象月ごとの支払ステータス</div>
+          <div id="agencyInvoiceList"></div>
+        </div>
+        <div class="panel">
+          <h3>2026年9月分の内訳</h3>
+          <div class="sub">承認済み商談ベースで自動計算されています</div>
+          <div id="agencyInvoiceDetail"></div>
+          <div class="invoice-total-row">
+            <span>支払合計</span>
+            <b id="agencyInvoiceTotal">¥0</b>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ 共通：チャット ============ -->
+
+    <section class="view" id="chat">
+      <div class="topbar">
+        <div>
+          <h1>チャット</h1>
+          <p id="chatSub">発注企業と代理店が商談の詳細をすり合わせる場です</p>
+        </div>
+      </div>
+      <div class="chat-wrap">
+        <div class="chat-list">
+          <div class="chat-item active"><div class="nm">代理店X</div><div class="pv">承認条件の確認をお願いします</div></div>
+          <div class="chat-item"><div class="nm">B社（M&A仲介）</div><div class="pv">来週の商談、日程調整中です</div></div>
+          <div class="chat-item"><div class="nm">C社（バックオフィスBPO）</div><div class="pv">承認ありがとうございます</div></div>
+        </div>
+        <div class="chat-main">
+          <div class="chat-warn">⚠ 連絡先の直接交換は規約で禁止されています。やり取りはすべてプラットフォーム上で行ってください。</div>
+          <div class="chat-body" id="chatBody">
+            <div class="bubble them">第一製造株式会社の商談、役職条件が「課長以上」となっていますが、部長ですと該当しますか？</div>
+            <div class="bubble me">はい、部長以上も条件を満たします。ご提出お願いします。</div>
+            <div class="bubble them">承知しました。本日中に提出します。</div>
+          </div>
+          <div class="chat-input">
+            <input type="text" id="chatInput" placeholder="メッセージを入力...">
+            <button class="btn primary" id="sendChat">送信</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    </div>
+  </main>
+</div>
+
+<script>
+// ---------- Mode switching ----------
+let currentMode = 'buyer';
+function setMode(mode){
+  currentMode = mode;
+  document.getElementById('modeBuyerBtn').classList.toggle('active', mode==='buyer');
+  document.getElementById('modeAgencyBtn').classList.toggle('active', mode==='agency');
+  document.getElementById('navBuyer').style.display = mode==='buyer' ? 'flex' : 'none';
+  document.getElementById('navAgency').style.display = mode==='agency' ? 'flex' : 'none';
+  document.getElementById('chatSub').textContent = mode==='buyer'
+    ? '代理店とのやり取りを、発注企業として行います'
+    : '発注企業とのやり取りを、代理店として行います';
+  const firstView = mode==='buyer' ? 'buyerHome' : 'openDeals';
+  showView(firstView);
+  const nav = document.getElementById(mode==='buyer' ? 'navBuyer' : 'navAgency');
+  nav.querySelectorAll('button').forEach(b=>b.classList.toggle('active', b.dataset.view===firstView));
+}
+function showView(id){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+function jumpTo(id){
+  showView(id);
+  document.querySelectorAll('#navBuyer button, #navAgency button').forEach(b=>{
+    b.classList.toggle('active', b.dataset.view===id);
+  });
+}
+document.querySelectorAll('#navBuyer button, #navAgency button').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const nav = btn.closest('nav');
+    nav.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    showView(btn.dataset.view);
+  });
+});
+
+// ---------- Deals (buyer: approve) ----------
+const deals = [
+  {company:'第一製造株式会社', biz:'製造業 / 従業員250名', receive:40000, status:'pending', posting:'A社（AI研修サービス）の案件',
+   partner:'代理店X', service:'AI研修', date:'2026/09/20', time:'10:30〜', duration:'60分間',
+   conditions:[
+     {q:'企業規模が50名以上である', required:true, ans:'はい'},
+     {q:'担当者が代表・役員クラスである', required:true, ans:'はい'},
+     {q:'AI活用状況のヒアリングが完了している', required:true, ans:'はい'},
+   ]},
+  {company:'サンプル商事株式会社', biz:'卸売業 / 従業員80名', receive:60000, status:'pending', posting:'B社（M&A仲介）の案件',
+   partner:'代理店Y', service:'M&A初回面談設定', date:'2026/09/18', time:'14:00〜', duration:'45分間',
+   conditions:[
+     {q:'意思決定者（代表・役員クラス）との面談である', required:true, ans:'はい'},
+     {q:'クライアントの事前承認を得ている', required:true, ans:'いいえ'},
+     {q:'年商5〜10億円の範囲内である', required:true, ans:'はい'},
+   ]},
+  {company:'サンプルフーズ株式会社', biz:'製造業 / 従業員130名', receive:15000, status:'approved', posting:'C社（バックオフィスBPO）の案件',
+   partner:'代理店X', service:'バックオフィスBPOナーチャリング', date:'2026/09/10', time:'11:00〜', duration:'30分間',
+   conditions:[
+     {q:'YouTube経由の資料DLリードである', required:true, ans:'はい'},
+     {q:'ヒアリング項目を記録している', required:false, ans:'はい'},
+     {q:'請求書を30枚以上発行している', required:false, ans:'はい'},
+   ]},
+  {company:'サンプル建設株式会社', biz:'建設業 / 従業員60名', receive:45000, status:'rejected', posting:'非公開企業（製造業）の案件',
+   partner:'代理店Z', service:'非公開案件（①パブリック）', date:'2026/09/05', time:'16:00〜', duration:'30分間',
+   conditions:[
+     {q:'企業規模が200名以上である', required:true, ans:'いいえ'},
+     {q:'担当者が課長以上である', required:true, ans:'はい'},
+     {q:'対応エリア内の企業である', required:false, ans:'はい'},
+   ]},
+];
+let selectedDeal = 0;
+
+const activityLog = [
+  {who:'高山 佳央', init:'高', action:'がメールアドレスを変更しました', time:'4日前', msg:null},
+  {who:'高山 佳央', init:'高', action:'がコメントを追加しました', time:'4日前', msg:'先方がリスケしたいそうなので、変更してもいいですか？'},
+  {who:'篠田 優子', init:'篠', action:'がコメントを追加しました', time:'3日前', msg:'わかりました！'},
+];
+
+function statusLabel(s){ return s==='approved' ? '承認済み' : s==='rejected' ? '却下済み' : '承認待ち'; }
+
+function renderDealList(){
+  const pane = document.getElementById('dealListPane');
+  pane.innerHTML = deals.map((d,i)=>`
+    <div class="deal-listitem ${i===selectedDeal?'active':''}" onclick="selectDeal(${i})">
+      <div class="nm">${d.company}</div>
+      <div class="meta"><span><span class="dot ${d.status}"></span>${statusLabel(d.status)}</span><span>¥${d.receive.toLocaleString()}</span></div>
+    </div>
+  `).join('');
+}
+
+function selectDeal(i){ selectedDeal = i; renderDealList(); renderDealDetail(); }
+
+function renderDealDetail(){
+  const d = deals[selectedDeal];
+  const pane = document.getElementById('dealDetailPane');
+  const payAmount = Math.round(d.receive*0.9);
+
+  let actionsHtml;
+  if(d.status==='pending'){
+    actionsHtml = `<button class="btn primary" onclick="setStatus(${selectedDeal},'approved')">☑ 承認</button>
+      <button class="btn outline" onclick="setStatus(${selectedDeal},'rejected')">却下</button>`;
+  } else if(d.status==='approved'){
+    actionsHtml = `<span class="status-tag done-a">承認済み・支払額 ¥${payAmount.toLocaleString()}</span>`;
+  } else {
+    actionsHtml = `<span class="status-tag done-r">却下済み</span>`;
+  }
+
+  const condHtml = d.conditions.map(c=>{
+    const opts = (c.ans==='はい'||c.ans==='いいえ') ? ['はい','いいえ'] : ['紙','電子'];
+    return `<div class="cond-item">
+      <div class="q">${c.q}${c.required?'<span class="req">必須</span>':''}</div>
+      ${opts.map(o=>`<span class="ans-chip ${o===c.ans?'selected':''}">${o}</span>`).join('')}
+    </div>`;
+  }).join('');
+
+  pane.innerHTML = `
+    <div class="detail-head">
+      <span class="detail-back">←</span>
+      <h2>${d.company}</h2>
+      <span class="status-select">${statusLabel(d.status)} ▾</span>
+    </div>
+    <div class="detail-actions">${actionsHtml}</div>
+
+    <div class="amount-row">
+      <div class="amount-card">
+        <div class="big">¥${d.receive.toLocaleString()}</div>
+        <div class="lbl">受取単価（発注企業からの受取額）</div>
+      </div>
+      <div class="schedule-card">
+        <div class="lbl">商談日指定</div>
+        <div class="schedule-pills">
+          <span>${d.date}</span><span>${d.time}</span><span>${d.duration}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="info-grid">
+      <div class="info-block">
+        <h4>パートナー</h4>
+        <div class="info-item"><span>対象案件</span><b>${d.posting}</b></div>
+        <div class="info-item"><span>代理店</span><b>${d.partner}</b></div>
+        <div class="info-item"><span>サービス名</span><b>${d.service}</b></div>
+        <div class="info-item"><span>報酬（支払額）</span><b>¥${payAmount.toLocaleString()}</b></div>
+        <div class="info-item"><span>業種</span><b>${d.biz}</b></div>
+      </div>
+      <div class="info-block">
+        <h4>承認条件</h4>
+        ${condHtml}
+      </div>
+    </div>
+  `;
+}
+
+function renderActivity(){
+  document.getElementById('activityFeed').innerHTML = activityLog.map(a=>`
+    <div class="act-item">
+      <div class="avatar">${a.init}</div>
+      <div class="act-body">
+        <div><span class="who">${a.who}</span> ${a.action}</div>
+        <div class="time">${a.time}</div>
+        ${a.msg ? `<div class="act-msg">${a.msg}</div>` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderDeals(){
+  let sumR=0,sumP=0;
+  deals.forEach(d=>{ if(d.status!=='pending'){ sumR += d.receive; sumP += Math.round(d.receive*0.9); } });
+  document.getElementById('sumReceive').textContent = '¥'+sumR.toLocaleString();
+  document.getElementById('sumPay').textContent = '¥'+sumP.toLocaleString();
+  document.getElementById('sumMargin').textContent = '¥'+(sumR-sumP).toLocaleString();
+  renderDealList();
+  renderDealDetail();
+  renderActivity();
+}
+function setStatus(i,status){ deals[i].status = status; renderDeals(); renderInvoices(); }
+renderDeals();
+
+// ---------- Invoice (buyer / agency) ----------
+const invoiceMonths = [
+  {month:'2026年9月分', count:2, status:'due'},
+  {month:'2026年8月分', count:6, status:'paid'},
+  {month:'2026年7月分', count:5, status:'paid'},
+];
+
+function renderInvoices(){
+  const approvedDeals = deals.filter(d=>d.status==='approved');
+  const receiveTotal = approvedDeals.reduce((s,d)=>s+d.receive,0);
+  const payTotal = approvedDeals.reduce((s,d)=>s+Math.round(d.receive*0.9),0);
+
+  // 発注企業側：請求一覧
+  const buyerList = document.getElementById('buyerInvoiceList');
+  if(buyerList){
+    buyerList.innerHTML = invoiceMonths.map((m,i)=>`
+      <div class="invoice-item ${i===0?'active':''}">
+        <div class="invoice-item-top"><span>${m.month}</span><span>¥${(i===0?receiveTotal:receiveTotal+i*40000).toLocaleString()}</span></div>
+        <div class="invoice-item-sub"><span>承認商談 ${i===0?approvedDeals.length:m.count}件</span><span class="invoice-status ${m.status}">${m.status==='paid'?'支払済み':'未払い'}</span></div>
+      </div>
+    `).join('');
+    document.getElementById('buyerInvoiceDetail').innerHTML = approvedDeals.map(d=>`
+      <div class="invoice-line">
+        <div><div>${d.company}</div><div class="c">${d.partner} 経由</div></div>
+        <div>¥${d.receive.toLocaleString()}</div>
+      </div>
+    `).join('') || '<div class="sub">今月はまだ承認済みの商談がありません</div>';
+    document.getElementById('buyerInvoiceTotal').textContent = '¥'+receiveTotal.toLocaleString();
+  }
+
+  // 代理店側：支払明細
+  const agencyList = document.getElementById('agencyInvoiceList');
+  if(agencyList){
+    agencyList.innerHTML = invoiceMonths.map((m,i)=>`
+      <div class="invoice-item ${i===0?'active':''}">
+        <div class="invoice-item-top"><span>${m.month}</span><span>¥${(i===0?payTotal:payTotal+i*32000).toLocaleString()}</span></div>
+        <div class="invoice-item-sub"><span>承認商談 ${i===0?approvedDeals.length:m.count}件</span><span class="invoice-status ${m.status}">${m.status==='paid'?'振込済み':'支払予定'}</span></div>
+      </div>
+    `).join('');
+    document.getElementById('agencyInvoiceDetail').innerHTML = approvedDeals.map(d=>`
+      <div class="invoice-line">
+        <div><div>${d.company}</div></div>
+        <div>¥${Math.round(d.receive*0.9).toLocaleString()}</div>
+      </div>
+    `).join('') || '<div class="sub">今月はまだ承認済みの商談がありません</div>';
+    document.getElementById('agencyInvoiceTotal').textContent = '¥'+payTotal.toLocaleString();
+  }
+}
+renderInvoices();
+
+
+// ---------- Agencies (buyer: find agencies) ----------
+const agencies = [
+  {name:'代理店X', grade:'gold', volume:'累計312件 / 継続8ヶ月', approve:'承認率 91%', quality:'クレーム率 0.3%', tags:['製造業','AI研修','建設業']},
+  {name:'代理店Y', grade:'platinum', volume:'累計540件 / 継続14ヶ月', approve:'承認率 96%', quality:'クレーム率 0.1%', tags:['M&A','ヘルスケア']},
+  {name:'代理店Z', grade:'silver', volume:'累計98件 / 継続3ヶ月', approve:'承認率 82%', quality:'クレーム率 1.2%', tags:['BPO','卸売']},
+  {name:'個人紹介者（田中氏）', grade:'bronze', volume:'累計12件 / 継続1ヶ月', approve:'承認率 75%', quality:'クレーム率 0%', tags:['紹介型']},
+];
+const gradeLabel = {bronze:'ブロンズ',silver:'シルバー',gold:'ゴールド',platinum:'プラチナ'};
+document.getElementById('agencyGrid').innerHTML = agencies.map(a=>`
+  <div class="agency-card">
+    <div class="agency-top"><h4>${a.name}</h4><span class="badge ${a.grade}">${gradeLabel[a.grade]}</span></div>
+    <div class="metric-row"><span>稼働量</span><b>${a.volume}</b></div>
+    <div class="metric-row"><span>成果</span><b>${a.approve}</b></div>
+    <div class="metric-row"><span>品質</span><b>${a.quality}</b></div>
+    <div class="agency-tags">${a.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+    <div style="margin-top:12px;"><button class="btn blue small" onclick="alert('${a.name}にオファーを送りました')">オファーを送る</button></div>
+  </div>
+`).join('');
+
+// ---------- Conditions builder (buyer) ----------
+let fields = ['規模：200名以上','役職：課長以上','請求書：50枚以上発行'];
+function renderFields(){
+  document.getElementById('fieldList').innerHTML = fields.map((f,i)=>`
+    <div class="field-row">
+      <input type="text" value="${f}" onchange="fields[${i}]=this.value">
+      <span class="del" onclick="removeField(${i})">✕</span>
+    </div>
+  `).join('');
+}
+function removeField(i){ fields.splice(i,1); renderFields(); }
+document.getElementById('addField').addEventListener('click',()=>{ fields.push('新しい条件'); renderFields(); });
+renderFields();
+
+const templates = [
+  {name:'AI研修（製造・建設・卸）勝ちパターン', desc:'企業規模50〜100億円 / 代表・役員クラス'},
+  {name:'M&A売り手候補（年商5〜10億）', desc:'意思決定者面談 + クライアント承認'},
+  {name:'BPOナーチャリング（資料DL経由）', desc:'YouTube経由DLリード向け'},
+];
+function renderTmpl(){
+  document.getElementById('tmplList').innerHTML = templates.map(t=>`
+    <div class="tmpl-item">
+      <div><div>${t.name}</div><div style="color:var(--muted);font-size:12px;margin-top:2px;">${t.desc}</div></div>
+      <span class="use">適用</span>
+    </div>
+  `).join('');
+}
+renderTmpl();
+document.getElementById('saveTmpl').addEventListener('click',()=>{
+  templates.unshift({name:'新規テンプレート（'+fields.length+'条件）', desc:fields.join(' / ')});
+  renderTmpl();
+});
+
+// ---------- Open deals board (agency) ----------
+const bookmarkSvg = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1Z"/></svg>`;
+
+const postings = [
+  {cat:'AI・研修', catClass:'cat-blue', title:'A社（AI研修サービス）のアポイント獲得', area:'全国', fee:40000, count:'50件', date:'2026/08/20'},
+  {cat:'M&A', catClass:'cat-purple', title:'B社（M&A仲介） M&A売り手候補の初回面談設定', area:'全国', fee:60000, count:'30件', date:'2026/08/18'},
+  {cat:'BPO', catClass:'cat-green', title:'C社（バックオフィスBPO） バックオフィスBPOナーチャリング', area:'関東エリア', fee:15000, count:'120件', date:'2026/08/15'},
+  {cat:'製造業（非公開）', catClass:'cat-grey', title:'非公開企業のアポイント獲得（①パブリック）', area:'東海エリア', fee:45000, count:'20件', date:'2026/08/22'},
+];
+document.getElementById('postList').innerHTML = postings.map(p=>`
+  <div class="post-card">
+    <div class="post-top">
+      <span class="cat-badge ${p.catClass}">${p.cat}</span>
+      <span class="bookmark">${bookmarkSvg}</span>
+    </div>
+    <h3 class="post-title">${p.title}</h3>
+    <div class="post-sub">${p.cat}　|　${p.area}</div>
+    <div class="post-stats-row">
+      <div class="post-stat"><div class="l">成果報酬額（手数料控除後）</div><div class="v">¥${Math.round(p.fee*0.9).toLocaleString()}<span>/件</span></div></div>
+      <div class="post-stat"><div class="l">募集件数</div><div class="v">${p.count}</div></div>
+      <div class="post-stat"><div class="l">掲載日</div><div class="v">${p.date}</div></div>
+      <button class="btn primary small" onclick="jumpTo('submitDeal')">詳細を見る</button>
+    </div>
+  </div>
+`).join('');
+
+// ---------- Submit deal (agency) ----------
+document.getElementById('submitDealBtn').addEventListener('click',()=>{
+  const company = document.getElementById('subCompany').value || '（企業名未入力）';
+  const list = document.getElementById('submitList');
+  const item = document.createElement('div');
+  item.className = 'quick-link';
+  item.innerHTML = `<span>${company}</span><span class="status-tag pending">承認待ち</span>`;
+  list.prepend(item);
+  document.getElementById('subCompany').value = '';
+});
+
+// ---------- Chat ----------
+document.getElementById('sendChat').addEventListener('click', sendMsg);
+document.getElementById('chatInput').addEventListener('keydown', e=>{ if(e.key==='Enter') sendMsg(); });
+function sendMsg(){
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if(!text) return;
+  const warnWords = ['@','電話','LINE','090','080','070'];
+  const flagged = warnWords.some(w=>text.includes(w));
+  const body = document.getElementById('chatBody');
+  const bubble = document.createElement('div');
+  bubble.className = 'bubble me';
+  bubble.textContent = text;
+  body.appendChild(bubble);
+  if(flagged){
+    const warn = document.createElement('div');
+    warn.className = 'bubble them';
+    warn.style.background = '#FBF3E2'; warn.style.color = '#8A6412';
+    warn.textContent = '⚠ 連絡先の交換が検知されました。やり取りはプラットフォーム上で継続してください。';
+    body.appendChild(warn);
+  }
+  input.value='';
+  body.scrollTop = body.scrollHeight;
+}
+
+// ---------- Private deal reveal (agency view) ----------
+let stage = 0;
+const stages = [
+  {label:'① パブリック', name:'非公開企業（製造業）', company:'第一製造株式会社', contact:'非公開', blurCompany:true, blurContact:true},
+  {label:'② セミクローズド（ゴールド以上）', name:'非公開企業（製造業・従業員250名）', company:'第一製造株式会社', contact:'非公開', blurCompany:true, blurContact:true},
+  {label:'③ フルオープン（選定代理店のみ・NDA締結後）', name:'第一製造株式会社', company:'第一製造株式会社', contact:'高山 佳央 様（経理部）', blurCompany:false, blurContact:false},
+];
+document.getElementById('revealNext').addEventListener('click',()=>{
+  if(stage < stages.length-1) stage++;
+  const s = stages[stage];
+  document.getElementById('revealStage').textContent = s.label;
+  document.getElementById('revealName').textContent = s.name;
+  const c = document.getElementById('revealCompany');
+  const ct = document.getElementById('revealContact');
+  c.textContent = s.company; c.classList.toggle('blur', s.blurCompany);
+  ct.textContent = s.contact; ct.classList.toggle('blur', s.blurContact);
+  if(stage===stages.length-1) document.getElementById('revealNext').style.display='none';
+});
+</script>
+</body>
+</html>
